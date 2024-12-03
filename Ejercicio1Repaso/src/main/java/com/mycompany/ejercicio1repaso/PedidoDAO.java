@@ -8,92 +8,76 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author tedax
  */
 public class PedidoDAO {
-    
-    public void listarPedidos(){
+
+    // Método para listar todos los pedidos
+    public List<Pedido> listarPedidos() throws SQLException {
+        List<Pedido> pedidos = new ArrayList<>();
+        String query = "SELECT * FROM pedido";
         
-        String sql="SELECT * FROM pedido";
-        try (Connection conn =ConexionBD.getConnection();
-             PreparedStatement stmt =conn.prepareStatement(sql);
-             ResultSet rs =stmt.executeQuery()){
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+            
             while (rs.next()) {
-               int id =rs.getInt("id");
-               String id_cliente=rs.getString("id_cliente");
-               String fecha=rs.getString("fecha");
-               Float precio_total=rs.getFloat("precio_total");
-               
-                System.out.println("Id: " +id+", id_cliente: " +id_cliente+", fecha: " +fecha +", precio_total: " +precio_total);
-                
+                Pedido pedido = new Pedido(
+                        rs.getInt("id"),
+                        rs.getString("id_cliente"),
+                        rs.getString("fecha"),
+                        rs.getFloat("precio_total")
+                );
+                pedidos.add(pedido);
             }
-            
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
+        return pedidos;
     }
 
-    public boolean anadirPedidos(Pedido pedido) {
+    // Método para añadir un nuevo pedido
+    public void añadirPedido(int idCliente, String fecha, float precioTotal) throws SQLException {
+        String query = "INSERT INTO pedido (id_cliente, fecha, precio_total) VALUES (?, ?, ?)";
         
-        String sql="INSERT INTO pedido (id_cliente, fecha, precio_total) VALUES (?, ?, ?)";
-        
-        try (Connection conn =ConexionBD.getConnection();
-                PreparedStatement stmt=conn.prepareStatement(sql)){
-          
-            stmt.setString(1, pedido.getId_cliente());
-            stmt.setString(2, pedido.getFecha());
-            stmt.setFloat(3, pedido.getPrecio_total());
-            
-            
-            int filasAfectadas =stmt.executeUpdate();
-            return filasAfectadas  > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-        
-        
-        
-    }
-
-    public boolean modificarPedidos(int idPedido, String idCliente, String fecha, float precioTotal) {
-        String sql = "UPDATE pedido SET id_cliente = ?, fecha = ?, precio_total = ? WHERE id = ?";
         try (Connection conn = ConexionBD.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, idCliente);
-            stmt.setString(2, fecha);
-            stmt.setFloat(3, precioTotal);
-            stmt.setInt(4, idPedido);
-
-            int filasAfectadas = stmt.executeUpdate();
-
-            return filasAfectadas > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace(); 
-            return false;
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            
+            pstmt.setInt(1, idCliente);
+            pstmt.setString(2, fecha);
+            pstmt.setFloat(3, precioTotal);
+            
+            pstmt.executeUpdate();
         }
     }
 
-    public boolean eliminarPedidos(int idPedido) {
-        String sql = "DELETE FROM pedido WHERE id = ?";
+    // Método para modificar un pedido por ID
+    public void modificarPedidoPorId(int idPedido, String nuevaFecha, float nuevoPrecioTotal) throws SQLException {
+        String query = "UPDATE pedido SET fecha = ?, precio_total = ? WHERE id = ?";
+        
         try (Connection conn = ConexionBD.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, idPedido);
-
-            int filasAfectadas = stmt.executeUpdate();
-
-            return filasAfectadas > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            
+            pstmt.setString(1, nuevaFecha);
+            pstmt.setFloat(2, nuevoPrecioTotal);
+            pstmt.setInt(3, idPedido);
+            
+            pstmt.executeUpdate();
         }
     }
 
+    // Método para eliminar un pedido por ID
+    public void eliminarPedidoPorId(int idPedido) throws SQLException {
+        String query = "DELETE FROM pedido WHERE id = ?";
+        
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            
+            pstmt.setInt(1, idPedido);
+            pstmt.executeUpdate();
+        }
+    }
 }

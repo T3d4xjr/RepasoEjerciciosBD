@@ -8,6 +8,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -15,94 +17,70 @@ import java.sql.SQLException;
  */
 public class ClienteDAO {
 
-    
-    public void listarClientes(){
-    String sql ="SELECT * FROM cliente";
-    
-        try(Connection conn =ConexionBD.getConnection();
-            PreparedStatement stmt =conn.prepareStatement(sql);
-            ResultSet rs =stmt.executeQuery()) {
+    // Método para listar todos los clientes
+    public List<Cliente> listarClientes() throws SQLException {
+        List<Cliente> clientes = new ArrayList<>();
+        String query = "SELECT * FROM cliente";
+        
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareCall(query);
+             ResultSet rs = stmt.executeQuery()) {
             
             while (rs.next()) {
-                 int id = rs.getInt("id");
-                String nombre =rs.getString("nombre");
-                String email =rs.getString("email");
-                String ciudad =rs.getString("ciudad");
-                String telefono =rs.getString("telefono");
-                
-                System.out.println("Id: "+id+", nombre :" +nombre+", email :"+email+", ciudad :"+ciudad+", telefono :"+telefono);
-                
-                
+                Cliente cliente = new Cliente(
+                        rs.getInt("id"),
+                        rs.getString("nombre"),
+                        rs.getString("email"),
+                        rs.getString("ciudad"),
+                        rs.getString("telefono")
+                );
+                clientes.add(cliente);
             }
-            
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-    }
-    public boolean anadirCliente(Cliente cliente) {
-       
-        String sql ="INSERT INTO cliente (nombre, email, ciudad, telefono) VALUES (?, ?, ?, ?)";
-        
-        
-        
-        try (Connection conn=ConexionBD.getConnection();
-             PreparedStatement stmt =conn.prepareStatement(sql)){
-            
-            stmt.setString(1,cliente.getNombre());
-            stmt.setString(2,cliente.getEmail());
-            stmt.setString(3,cliente.getCiudad());
-            stmt.setString(4,cliente.getTelefono());
-            
-            int filasafectadas =stmt.executeUpdate();
-            
-            return  filasafectadas > 0;
-            
-            
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-        
-        
-       
+        return clientes;
     }
 
-    public boolean modificarCliente(String email, String nombre, String telefono, String ciudad) {
-      String sql = "UPDATE cliente SET nombre = ?, telefono = ?, ciudad = ? WHERE email = ?";
-    try (Connection conn = ConexionBD.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-        stmt.setString(1, nombre);
-        stmt.setString(2, telefono);
-        stmt.setString(3, ciudad);
-        stmt.setString(4, email);
-
-        int filasAfectadas = stmt.executeUpdate();
-
-        return filasAfectadas > 0;
-
-    } catch (SQLException e) {
-        e.printStackTrace();
-        return false;
-    }
-      
-    }
-
-    public boolean eliminarCliente(String email) {
-    
-        String sql = "DELETE FROM cliente WHERE email = ?";
+    // Método para añadir un nuevo cliente
+    public void añadirCliente(String nombre, String email, String ciudad, String telefono) throws SQLException {
+        String query = "INSERT INTO cliente (nombre, email, ciudad, telefono) VALUES (?, ?, ?, ?)";
+        
         try (Connection conn = ConexionBD.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            
+            pstmt.setString(1, nombre);
+            pstmt.setString(2, email);
+            pstmt.setString(3, ciudad);
+            pstmt.setString(4, telefono);
+            
+            pstmt.executeUpdate();
+        }
+    }
 
-            stmt.setString(1, email);
+    // Método para modificar un cliente por email
+    public void modificarClientePorEmail(String email, String nuevoNombre, String nuevaCiudad, String nuevoTelefono) throws SQLException {
+        String query = "UPDATE cliente SET nombre = ?, ciudad = ?, telefono = ? WHERE email = ?";
+        
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            
+            pstmt.setString(1, nuevoNombre);
+            pstmt.setString(2, nuevaCiudad);
+            pstmt.setString(3, nuevoTelefono);
+            pstmt.setString(4, email);
+            
+            pstmt.executeUpdate();
+        }
+    }
 
-            int filasAfectadas = stmt.executeUpdate();
-
-            return filasAfectadas > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+    // Método para eliminar un cliente por email
+    public void eliminarClientePorEmail(String email) throws SQLException {
+        String query = "DELETE FROM cliente WHERE email = ?";
+        
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            
+            pstmt.setString(1, email);
+            pstmt.executeUpdate();
         }
     }
 
